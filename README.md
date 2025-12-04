@@ -1,7 +1,5 @@
 # Banking App
 
-## Description
-
 A modern, minimalistic banking application that allows users to register, manage personal accounts, and send transfers to other verified users.  
 The project focuses on secure authentication, clean API design, and reliable transaction handling — built as a practical foundation for exploring real-world backend architecture and financial workflows.
 
