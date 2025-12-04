@@ -1,10 +1,10 @@
 # Banking App
 
-![CI](https://github.com/nilijoski/movie-library/actions/workflows/maven.yml/badge.svg)
-![CD](https://github.com/nilijoski/movie-library/actions/workflows/deploy.yml/badge.svg)
-![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nilijoski_movie-library&metric=coverage)
-![Docker](https://img.shields.io/docker/pulls/microman49/movie-lib?logo=docker)
-<a href="https://movie-library-d67x.onrender.com/" target="_blank">
+![CI](https://github.com/nilijoski/banking-app/actions/workflows/maven.yml/badge.svg)
+![CD](https://github.com/nilijoski/banking-app/actions/workflows/deploy.yml/badge.svg)
+![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nilijoski_banking-app&metric=coverage)
+![Docker](https://img.shields.io/docker/pulls/microman49/banking-app?logo=docker)
+<a href="https://banking-app-6gwq.onrender.com/" target="_blank">
   <img src="https://img.shields.io/badge/Live-Online-green" alt="Live" />
 </a>
 
