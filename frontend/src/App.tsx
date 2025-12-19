@@ -1,34 +1,63 @@
-import { useState } from 'react'
-import logo from '/logo-banking.jpg'
-import './App.css'
+import {useState} from 'react';
+import {Routes, Route, Navigate, useNavigate} from 'react-router-dom';
+import Login from './components/Login';
+import Register from './components/Register';
+import type {User} from './types';
+import './App.css';
+
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [user, setUser] = useState<User | null>(() => {
+        const savedUser = sessionStorage.getItem('user');
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={logo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={logo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    const navigate = useNavigate();
+
+    const handleLogin = (loggedInUser: User) => {
+        setUser(loggedInUser);
+        sessionStorage.setItem('user', JSON.stringify(loggedInUser));
+        navigate('/dashboard');
+    };
+
+
+    return (
+        <Routes>
+            <Route
+                path="/login"
+                element={
+                    user ? (
+                        <Navigate to="/dashboard" replace/>
+                    ) : (
+                        <div className="auth-container">
+                            <Login onLogin={handleLogin}/>
+                        </div>
+                    )
+                }
+            />
+            <Route
+                path="/register"
+                element={
+                    user ? (
+                        <Navigate to="/dashboard" replace/>
+                    ) : (
+                        <div className="auth-container">
+                            <Register onRegister={handleLogin}/>
+                        </div>
+                    )
+                }
+            />
+
+            <Route
+                path="/"
+                element={<Navigate to={user ? "/dashboard" : "/login"} replace/>}
+            />
+            <Route
+                path="*"
+                element={<Navigate to={user ? "/dashboard" : "/login"} replace/>}
+            />
+        </Routes>
+    );
 }
 
-export default App
+export default App;
