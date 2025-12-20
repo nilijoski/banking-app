@@ -1,9 +1,6 @@
 package com.nilijoski.backend.service;
 
-import com.nilijoski.backend.exception.AccountNotFoundException;
-import com.nilijoski.backend.exception.InvalidIbanException;
-import com.nilijoski.backend.exception.InvalidTransferAmountException;
-import com.nilijoski.backend.exception.SameAccountTransferException;
+import com.nilijoski.backend.exception.*;
 import com.nilijoski.backend.model.Transaction;
 import com.nilijoski.backend.model.User;
 import com.nilijoski.backend.repository.TransactionRepository;
@@ -117,7 +114,7 @@ public class TransactionService {
     
     public Transaction getTransactionById(String id) {
         return transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found with id: " + id));
     }
     
     public List<Transaction> getTransactionsByAccountNumber(String accountNumber) {
