@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import type {User} from './types';
 import './App.css';
+import Dashboard from "./components/Dashboard.tsx";
 
 
 function App() {
@@ -20,6 +21,11 @@ function App() {
         navigate('/dashboard');
     };
 
+    const handleLogout = () => {
+        setUser(null);
+        sessionStorage.removeItem('user');
+        navigate('/login');
+    };
 
     return (
         <Routes>
@@ -47,7 +53,16 @@ function App() {
                     )
                 }
             />
-
+            <Route
+                path="/dashboard"
+                element={
+                    user ? (
+                        <Dashboard user={user} onLogout={handleLogout}/>
+                    ) : (
+                        <Navigate to="/login" replace/>
+                    )
+                }
+            />
             <Route
                 path="/"
                 element={<Navigate to={user ? "/dashboard" : "/login"} replace/>}
