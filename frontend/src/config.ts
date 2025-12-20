@@ -1,2 +1,1 @@
-export const API_URL = import.meta.env.VITE_API_URL ||
-    (import.meta.env.DEV ? 'http://localhost:8080' : '/api');
+export const API_URL = import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_URL || '/api';
