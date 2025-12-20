@@ -1,6 +1,6 @@
 package com.nilijoski.backend.service;
 
-import com.nilijoski.backend.exception.AccountNotFoundException;
+import com.nilijoski.backend.exception.*;
 import com.nilijoski.backend.model.User;
 import com.nilijoski.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 @Service
@@ -18,10 +19,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private Random random = new Random();
+    private static final String USR_NOT_FOUND = "User not found";
 
     public User register(String username, String password, String firstName, String lastName) {
         if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
+            throw new UsernameExistsException("Username already exists");
         }
 
         // Create user with account details
@@ -41,19 +44,19 @@ public class UserService {
     }
 
     private String generateAccountNumber() {
-        return String.format("%010d", new Random().nextInt(1000000000));
+        return String.format("%010d", random.nextInt(1000000000));
     }
 
     private String generateIban() {
-        return "DE" + String.format("%020d", new Random().nextLong() & Long.MAX_VALUE).substring(0, 20);
+        return "DE" + String.format("%020d", random.nextLong() & Long.MAX_VALUE).substring(0, 20);
     }
     
     public User login(String username, String password) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+                .orElseThrow(() -> new InvalidLoginException("Invalid username or password"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidLoginException("Invalid username or password");
         }
 
         return user;
@@ -61,7 +64,7 @@ public class UserService {
     
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new AccountNotFoundException("User not found"));
+                .orElseThrow(() -> new AccountNotFoundException(USR_NOT_FOUND));
     }
     
     public List<User> getAllUsers() {
@@ -75,10 +78,10 @@ public class UserService {
 
     public User addSavedRecipient(String userId, String recipientIban) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AccountNotFoundException("User not found"));
+                .orElseThrow(() -> new AccountNotFoundException(USR_NOT_FOUND));
 
         if (user.getSavedRecipientIbans().contains(recipientIban)) {
-            throw new RuntimeException("Recipient already saved");
+            throw new RecipientSavedException("Recipient already saved");
         }
 
         user.getSavedRecipientIbans().add(recipientIban);
@@ -87,18 +90,18 @@ public class UserService {
 
     public List<User> getSavedRecipients(String userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AccountNotFoundException(USR_NOT_FOUND));
 
         return user.getSavedRecipientIbans().stream()
                 .map(iban -> userRepository.findByIban(iban)
                         .orElse(null))
-                .filter(u -> u != null)
+                .filter(Objects::nonNull)
                 .toList();
     }
 
     public User removeSavedRecipient(String userId, String recipientIban) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AccountNotFoundException(USR_NOT_FOUND));
 
         user.getSavedRecipientIbans().remove(recipientIban);
         return userRepository.save(user);
@@ -119,21 +122,21 @@ public class UserService {
                 .orElseThrow(() -> new AccountNotFoundException("User not found with id: " + id));
     }
 
-    public User deposit(String accountNumber, BigDecimal amount) {
+    public void deposit(String accountNumber, BigDecimal amount) {
         User user = getUserByAccountNumber(accountNumber);
         user.setBalance(user.getBalance().add(amount));
         user.setUpdatedAt(LocalDateTime.now());
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
-    public User withdraw(String accountNumber, BigDecimal amount) {
+    public void withdraw(String accountNumber, BigDecimal amount) {
         User user = getUserByAccountNumber(accountNumber);
         if (user.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient balance");
+            throw new InvalidTransferAmountException("Insufficient balance");
         }
         user.setBalance(user.getBalance().subtract(amount));
         user.setUpdatedAt(LocalDateTime.now());
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     public User updateUser(String id, User userDetails) {
