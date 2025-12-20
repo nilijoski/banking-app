@@ -2,19 +2,19 @@ import { API_URL } from '../config';
 import type {User, Transaction, SavedRecipient} from '../types';
 
 export const fetchUser = async (accountNumber: string): Promise<User> => {
-    const response = await fetch(`${API_URL}/api/users/number/${accountNumber}`);
+    const response = await fetch(`${API_URL}/users/number/${accountNumber}`);
     if (!response.ok) throw new Error('Failed to fetch account');
     return response.json();
 };
 
 export const fetchTransactions = async (iban: string): Promise<Transaction[]> => {
-    const response = await fetch(`${API_URL}/api/transactions/iban/${iban}`);
+    const response = await fetch(`${API_URL}/transactions/iban/${iban}`);
     if (!response.ok) throw new Error('Failed to fetch transactions');
     return response.json();
 };
 
 export const fetchSavedRecipients = async (userId: string): Promise<SavedRecipient[]> => {
-    const response = await fetch(`${API_URL}/api/users/${userId}/saved-recipients`);
+    const response = await fetch(`${API_URL}/users/${userId}/saved-recipients`);
     if (!response.ok) throw new Error('Failed to fetch saved recipients');
     return response.json();
 };
@@ -27,7 +27,7 @@ export const createTransfer = async (transferData: {
     amount: number;
     description: string;
 }) => {
-    const response = await fetch(`${API_URL}/api/transactions/transfer`, {
+    const response = await fetch(`${API_URL}/transactions/transfer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(transferData),
@@ -41,7 +41,7 @@ export const createTransfer = async (transferData: {
 };
 
 export const saveRecipient = async (userId: string, recipientIban: string) => {
-    const response = await fetch(`${API_URL}/api/users/${userId}/saved-recipients`, {
+    const response = await fetch(`${API_URL}/users/${userId}/saved-recipients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipientIban }),
@@ -52,7 +52,7 @@ export const saveRecipient = async (userId: string, recipientIban: string) => {
 };
 
 export const deleteRecipient = async (userId: string, recipientIban: string) => {
-    const response = await fetch(`${API_URL}/api/users/${userId}/saved-recipients/${recipientIban}`, {
+    const response = await fetch(`${API_URL}/users/${userId}/saved-recipients/${recipientIban}`, {
         method: 'DELETE',
     });
 
