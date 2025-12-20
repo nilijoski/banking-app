@@ -1,5 +1,7 @@
 package com.nilijoski.backend.service;
 
+import com.nilijoski.backend.exception.AccountNotFoundException;
+import com.nilijoski.backend.exception.InvalidTransferAmountException;
 import com.nilijoski.backend.model.User;
 import com.nilijoski.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -251,7 +253,7 @@ class UserServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("Jane", result.get(0).getFirstName());
+        assertEquals("Jane", result.getFirst().getFirstName());
         verify(userRepository).findById("user123");
         verify(userRepository).findByIban("DE89370400440532013001");
     }
@@ -296,4 +298,120 @@ class UserServiceTest {
 
         assertEquals("User not found", exception.getMessage());
     }
+    @Test
+    void getAccountByAccountNumber_Success() {
+        when(userRepository.findByAccountNumber("1234567890"))
+                .thenReturn(Optional.of(testUser));
+
+        User result = userService.getAccountByAccountNumber("1234567890");
+
+        assertNotNull(result);
+        assertEquals("1234567890", result.getAccountNumber());
+    }
+
+    @Test
+    void getAccountByAccountNumber_NotFound() {
+        when(userRepository.findByAccountNumber("invalid"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(AccountNotFoundException.class,
+                () -> userService.getAccountByAccountNumber("invalid"));
+    }
+
+    @Test
+    void getUserByIban_Success() {
+        when(userRepository.findByIban(testUser.getIban()))
+                .thenReturn(Optional.of(testUser));
+
+        User result = userService.getUserByIban(testUser.getIban());
+
+        assertEquals(testUser.getIban(), result.getIban());
+    }
+
+    @Test
+    void getUserByIban_NotFound() {
+        when(userRepository.findByIban("INVALID"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(AccountNotFoundException.class,
+                () -> userService.getUserByIban("INVALID"));
+    }
+
+    @Test
+    void getUserById_Success() {
+        when(userRepository.findById("user123"))
+                .thenReturn(Optional.of(testUser));
+
+        User result = userService.getUserById("user123");
+
+        assertEquals("user123", result.getId());
+    }
+
+    @Test
+    void getUserById_NotFound() {
+        when(userRepository.findById("invalid"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(AccountNotFoundException.class,
+                () -> userService.getUserById("invalid"));
+    }
+
+    @Test
+    void deposit_Success() {
+        testUser.setBalance(BigDecimal.valueOf(100));
+        when(userRepository.findByAccountNumber("1234567890"))
+                .thenReturn(Optional.of(testUser));
+
+        userService.deposit("1234567890", BigDecimal.valueOf(50));
+
+        assertEquals(BigDecimal.valueOf(150), testUser.getBalance());
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void withdraw_Success() {
+        testUser.setBalance(BigDecimal.valueOf(100));
+        when(userRepository.findByAccountNumber("1234567890"))
+                .thenReturn(Optional.of(testUser));
+
+        userService.withdraw("1234567890", BigDecimal.valueOf(40));
+
+        assertEquals(BigDecimal.valueOf(60), testUser.getBalance());
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void withdraw_InsufficientBalance() {
+        testUser.setBalance(BigDecimal.valueOf(20));
+        when(userRepository.findByAccountNumber("1234567890"))
+                .thenReturn(Optional.of(testUser));
+
+        assertThrows(InvalidTransferAmountException.class,
+                () -> userService.withdraw("1234567890", BigDecimal.valueOf(50)));
+    }
+
+    @Test
+    void updateUser_Success() {
+        when(userRepository.findById("user123"))
+                .thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class)))
+                .thenReturn(testUser);
+
+        User update = new User();
+        update.setFirstName("Updated");
+        update.setBalance(BigDecimal.TEN);
+
+        User result = userService.updateUser("user123", update);
+
+        assertEquals("Updated", result.getFirstName());
+        assertEquals(BigDecimal.TEN, result.getBalance());
+    }
+
+    @Test
+    void deleteUser_Success() {
+        userService.deleteUser("user123");
+
+        verify(userRepository).deleteById("user123");
+    }
+
 }

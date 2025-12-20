@@ -1,9 +1,6 @@
 package com.nilijoski.backend.service;
 
-import com.nilijoski.backend.exception.AccountNotFoundException;
-import com.nilijoski.backend.exception.InvalidIbanException;
-import com.nilijoski.backend.exception.InvalidTransferAmountException;
-import com.nilijoski.backend.exception.SameAccountTransferException;
+import com.nilijoski.backend.exception.*;
 import com.nilijoski.backend.model.Transaction;
 import com.nilijoski.backend.model.User;
 import com.nilijoski.backend.repository.TransactionRepository;
@@ -15,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -191,4 +189,88 @@ class TransactionServiceTest {
 
         assertTrue(exception.getMessage().contains("Transaction not found with id"));
     }
+
+    @Test
+    void getRecipientIbanByUserIban_success() {
+        Transaction t1 = new Transaction();
+        t1.setToIban("IBAN1");
+
+        Transaction t2 = new Transaction();
+        t2.setToIban("IBAN2");
+
+        Transaction t3 = new Transaction();
+        t3.setToIban("IBAN1"); // duplicate
+
+        when(transactionRepository.findByFromIban(fromUser.getIban()))
+                .thenReturn(List.of(t1, t2, t3));
+
+        List<String> result = transactionService.getRecipientIbanByUserIban(fromUser.getIban());
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains("IBAN1"));
+        assertTrue(result.contains("IBAN2"));
+    }
+
+    @Test
+    void getAllTransactions_success() {
+        when(transactionRepository.findAll()).thenReturn(List.of(new Transaction()));
+
+        List<Transaction> result = transactionService.getAllTransactions();
+
+        assertEquals(1, result.size());
+        verify(transactionRepository).findAll();
+    }
+
+    @Test
+    void getTransactionById_notFound_throwsTransactionNotFoundException() {
+        when(transactionRepository.findById("tx1")).thenReturn(Optional.empty());
+
+        assertThrows(TransactionNotFoundException.class,
+                () -> transactionService.getTransactionById("tx1"));
+    }
+
+    @Test
+    void getTransactionsByAccountNumber_success() {
+        when(transactionRepository
+                .findByFromAccountNumberOrToAccountNumber("12345", "12345"))
+                .thenReturn(List.of(new Transaction()));
+
+        List<Transaction> result =
+                transactionService.getTransactionsByAccountNumber("12345");
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getTransactionsByIban_success() {
+        when(transactionRepository
+                .findByFromIbanOrToIban(fromUser.getIban(), fromUser.getIban()))
+                .thenReturn(List.of(new Transaction()));
+
+        List<Transaction> result =
+                transactionService.getTransactionsByIban(fromUser.getIban());
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void transfer_toAccountNotFound_throwsInvalidIbanException() {
+        when(userService.getUserByIban(fromUser.getIban())).thenReturn(fromUser);
+        when(userService.getUserByIban(toUser.getIban()))
+                .thenThrow(new RuntimeException());
+
+        InvalidIbanException ex = assertThrows(InvalidIbanException.class, () ->
+                transactionService.transfer(
+                        fromUser.getIban(),
+                        toUser.getIban(),
+                        toUser.getFirstName(),
+                        toUser.getLastName(),
+                        BigDecimal.TEN,
+                        "Test"
+                )
+        );
+
+        assertTrue(ex.getMessage().contains("Recipient IBAN not found"));
+    }
+
 }
