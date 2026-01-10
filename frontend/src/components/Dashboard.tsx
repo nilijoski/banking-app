@@ -13,10 +13,11 @@ interface DashboardProps {
 }
 
 function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
+  const [userState, setUserState] = useState<User>(user);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [savedRecipients, setSavedRecipients] = useState<SavedRecipient[]>([]);
   const [activeTab, setActiveTab] =
-      useState<'transactions' | 'sendMoney' | 'savedRecipients'>('transactions');
+      useState<'transactions' | 'sendMoney' | 'savedRecipients' | 'settings'>('transactions');
   const [message, setMessage] = useState('');
   const [warning, setWarning] = useState('');
   const [error, setError] = useState('');
@@ -26,12 +27,13 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
 
   const loadData = async () => {
     try {
-      const [, transactionsData, recipientsData] = await Promise.all([
+      const [userData, transactionsData, recipientsData] = await Promise.all([
         api.fetchUser(user.accountNumber),
         api.fetchTransactions(user.iban),
         api.fetchSavedRecipients(user.id),
       ]);
 
+      setUserState(userData);
       setTransactions(transactionsData);
       setSavedRecipients(recipientsData);
     } catch (err) {
@@ -43,7 +45,18 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
     void loadData()
     const refreshInterval = setInterval(loadData, 10000);
     return () => clearInterval(refreshInterval);
-  }, [user]);
+  }, [user.accountNumber, user.iban, user.id]);
+
+  useEffect(() => {
+    if (error || message || warning) {
+      const timer = setTimeout(() => {
+        setError('');
+        setMessage('');
+        setWarning('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, message, warning]);
 
   const handleTransfer = async (data: {
     iban: string;
@@ -65,7 +78,7 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
 
     try {
       const result = await api.createTransfer({
-        fromIban: user.iban,
+        fromIban: userState.iban,
         toIban: data.iban.replaceAll(/\s/g, ''),
         toFirstName: data.firstName,
         toLastName: data.lastName,
@@ -93,7 +106,7 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
     }
 
     try {
-      await api.saveRecipient(user.id, iban.replaceAll(/\s/g, ''));
+      await api.saveRecipient(userState.id, iban.replaceAll(/\s/g, ''));
       setMessage('Recipient saved successfully!');
       await loadData();
     } catch (err) {
@@ -104,10 +117,29 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
 
   const handleDeleteRecipient = async (recipientIban: string) => {
     try {
-      await api.deleteRecipient(user.id, recipientIban);
+      await api.deleteRecipient(userState.id, recipientIban);
+      setMessage('Recipient deleted');
       await loadData();
     } catch (err) {
       console.error('Failed to delete recipient', err);
+      setError('Failed to delete recipient');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!globalThis.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.deleteUser(userState.id);
+      setMessage('Account deleted successfully');
+      setTimeout(() => onLogout(), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,7 +147,7 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
       <div className="dashboard">
         <div className="dashboard-header">
           <h2>
-            Welcome, {user.firstName} {user.lastName}!
+            Welcome, {userState.firstName} {userState.lastName}!
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <span style={{ fontSize: '14px', color: timeLeft < 60 ? '#dc3545' : '#666' }}>
@@ -129,8 +161,8 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
 
         <div className="balance-section">
           <div className="balance-info">
-            <h3>{formatIban(user.iban)}</h3>
-            <div className="balance-amount">€{user.balance.toFixed(2)}</div>
+            <h3>{formatIban(userState.iban)}</h3>
+            <div className="balance-amount">€{userState.balance.toFixed(2)}</div>
           </div>
           <button className="send-money-btn" onClick={() => setActiveTab('sendMoney')}>
             Send Money
@@ -156,6 +188,12 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
           >
             Saved Recipients
           </button>
+          <button
+              className={`nav-tab ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </button>
         </div>
 
         {error && <div className="error">{error}</div>}
@@ -163,7 +201,7 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
         {message && <div className="success">{message}</div>}
 
         {activeTab === 'transactions' && (
-            <TransactionsList transactions={transactions} userIban={user.iban} />
+            <TransactionsList transactions={transactions} userIban={userState.iban} />
         )}
 
         {activeTab === 'sendMoney' && (
@@ -177,6 +215,30 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
 
         {activeTab === 'savedRecipients' && (
             <SavedRecipientsList recipients={savedRecipients} onDelete={handleDeleteRecipient} />
+        )}
+
+        {activeTab === 'settings' && (
+            <div className="settings">
+              <h3>Account Settings</h3>
+              <div className="settings-content">
+                <div className="account-info">
+                  <p><strong>Account Number:</strong> {userState.accountNumber}</p>
+                  <p><strong>IBAN:</strong> {formatIban(userState.iban)}</p>
+                  <p><strong>Name:</strong> {userState.firstName} {userState.lastName}</p>
+                </div>
+                <div className="danger-zone">
+                  <h4>Danger Zone</h4>
+                  <button
+                      className="delete-account-btn"
+                      onClick={handleDeleteAccount}
+                      disabled={loading}
+                  >
+                    {loading ? 'Deleting...' : 'Delete account permanently'}
+                  </button>
+                  <p className="warning-text">Once you delete your account, there is no going back. Please be certain.</p>
+                </div>
+              </div>
+            </div>
         )}
       </div>
   );
