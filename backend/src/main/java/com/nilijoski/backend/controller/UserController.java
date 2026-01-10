@@ -84,4 +84,9 @@ public class UserController {
         User user = userService.removeSavedRecipient(userId, recipientIban);
         return ResponseEntity.ok(user);
     }
+
+    @DeleteMapping("/{userId}")
+    public void removeSavedRecipient(@PathVariable String userId) {
+        userService.deleteUser(userId);
+    }
 }

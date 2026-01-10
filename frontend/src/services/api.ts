@@ -58,3 +58,11 @@ export const deleteRecipient = async (userId: string, recipientIban: string) => 
 
     if (!response.ok) throw new Error('Failed to delete recipient');
 };
+
+export const deleteUser = async (userId: string) => {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'DELETE',
+    });
+
+    if (!response.ok) throw new Error('Failed to delete recipient');
+};
