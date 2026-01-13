@@ -106,7 +106,7 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
     }
 
     try {
-      await api.saveRecipient(userState.id, iban.replaceAll(/\s/g, ''));
+      await api.saveRecipient(userState.id, iban.replaceAll(/\s/g, ''), firstName, lastName);
       setMessage('Recipient saved successfully!');
       await loadData();
     } catch (err) {
@@ -196,50 +196,52 @@ function Dashboard({ user, onLogout }: Readonly<DashboardProps>) {
           </button>
         </div>
 
-        {error && <div className="error">{error}</div>}
-        {warning && <div className="warning">{warning}</div>}
-        {message && <div className="success">{message}</div>}
+        <div className="dashboard-content">
+          {error && <div className="error">{error}</div>}
+          {warning && <div className="warning">{warning}</div>}
+          {message && <div className="success">{message}</div>}
 
-        {activeTab === 'transactions' && (
-            <TransactionsList transactions={transactions} userIban={userState.iban} />
-        )}
+          {activeTab === 'transactions' && (
+              <TransactionsList transactions={transactions} userIban={userState.iban} />
+          )}
 
-        {activeTab === 'sendMoney' && (
-            <TransferForm
-                savedRecipients={savedRecipients}
-                loading={loading}
-                onSubmit={handleTransfer}
-                onSaveRecipient={handleSaveRecipient}
-            />
-        )}
+          {activeTab === 'sendMoney' && (
+              <TransferForm
+                  savedRecipients={savedRecipients}
+                  loading={loading}
+                  onSubmit={handleTransfer}
+                  onSaveRecipient={handleSaveRecipient}
+              />
+          )}
 
-        {activeTab === 'savedRecipients' && (
-            <SavedRecipientsList recipients={savedRecipients} onDelete={handleDeleteRecipient} />
-        )}
+          {activeTab === 'savedRecipients' && (
+              <SavedRecipientsList recipients={savedRecipients} onDelete={handleDeleteRecipient} />
+          )}
 
-        {activeTab === 'settings' && (
-            <div className="settings">
-              <h3>Account Settings</h3>
-              <div className="settings-content">
-                <div className="account-info">
-                  <p><strong>Account Number:</strong> {userState.accountNumber}</p>
-                  <p><strong>IBAN:</strong> {formatIban(userState.iban)}</p>
-                  <p><strong>Name:</strong> {userState.firstName} {userState.lastName}</p>
-                </div>
-                <div className="danger-zone">
-                  <h4>Danger Zone</h4>
-                  <button
-                      className="delete-account-btn"
-                      onClick={handleDeleteAccount}
-                      disabled={loading}
-                  >
-                    {loading ? 'Deleting...' : 'Delete account permanently'}
-                  </button>
-                  <p className="warning-text">Once you delete your account, there is no going back. Please be certain.</p>
+          {activeTab === 'settings' && (
+              <div className="settings">
+                <h3>Account Settings</h3>
+                <div className="settings-content">
+                  <div className="account-info">
+                    <p><strong>Account Number:</strong> {userState.accountNumber}</p>
+                    <p><strong>IBAN:</strong> {formatIban(userState.iban)}</p>
+                    <p><strong>Name:</strong> {userState.firstName} {userState.lastName}</p>
+                  </div>
+                  <div className="danger-zone">
+                    <h4>Danger Zone</h4>
+                    <button
+                        className="delete-account-btn"
+                        onClick={handleDeleteAccount}
+                        disabled={loading}
+                    >
+                      {loading ? 'Deleting...' : 'Delete account permanently'}
+                    </button>
+                    <p className="warning-text">Once you delete your account, there is no going back. Please be certain.</p>
+                  </div>
                 </div>
               </div>
-            </div>
-        )}
+          )}
+        </div>
       </div>
   );
 }

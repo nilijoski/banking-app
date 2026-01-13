@@ -23,7 +23,6 @@ function TransferForm({ savedRecipients, loading, onSubmit, onSaveRecipient }: R
     const [lastName, setLastName] = useState('');
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
-    const [showSaveRecipient, setShowSaveRecipient] = useState(false);
 
     const handleIbanChange = (value: string) => {
         setManualIban(value);
@@ -38,20 +37,18 @@ function TransferForm({ savedRecipients, loading, onSubmit, onSaveRecipient }: R
         }
     };
 
-    const handleRecipientSelect = (recipientId: string) => {
-        setSelectedRecipient(recipientId);
-        if (recipientId) {
-            const recipient = savedRecipients.find(r => r.id === recipientId);
-            if (recipient) {
-                setManualIban(recipient.iban);
-                setFirstName(recipient.firstName);
-                setLastName(recipient.lastName);
-            }
-        } else {
-            setManualIban('');
-            setFirstName('');
-            setLastName('');
-        }
+    const handleRecipientSelect = (recipient: SavedRecipient) => {
+        setSelectedRecipient(recipient.id);
+        setManualIban(recipient.iban);
+        setFirstName(recipient.firstName);
+        setLastName(recipient.lastName);
+    };
+
+    const clearRecipient = () => {
+        setSelectedRecipient('');
+        setManualIban('');
+        setFirstName('');
+        setLastName('');
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -65,131 +62,137 @@ function TransferForm({ savedRecipients, loading, onSubmit, onSaveRecipient }: R
         setManualIban('');
         setFirstName('');
         setLastName('');
-        setShowSaveRecipient(false);
     };
 
     const handleSave = async () => {
         await onSaveRecipient(manualIban, firstName, lastName);
-        setShowSaveRecipient(false);
     };
 
     return (
-        <div className="transfer-section">
-            <form onSubmit={handleSubmit}>
-                {savedRecipients.length > 0 && (
-                    <div className="contact-selector">
-                        <select
-                            value={selectedRecipient}
-                            onChange={(e) => handleRecipientSelect(e.target.value)}
-                            disabled={loading}
-                        >
-                            <option value="">-- Select Saved Recipient --</option>
-                            {savedRecipients.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                    {r.firstName} {r.lastName} - {formatIban(r.iban)}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
-
-                <div className="form-group">
-                    <label htmlFor="recipientIban">Recipient IBAN</label>
-                    <input
-                        id="recipientIban"
-                        type="text"
-                        value={manualIban}
-                        onChange={(e) => handleIbanChange(e.target.value)}
-                        required
-                        disabled={loading}
-                        placeholder="DE89 3704 0044 0532 0130 00"
-                        className={ibanError ? 'input-error' : ''}
-                    />
-                    {ibanError && <div className="field-error">{ibanError}</div>}
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="recipientFirstName">Recipient First Name</label>
-                    <input
-                        id="recipientFirstName"
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        required
-                        disabled={loading}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="recipientLastName">Recipient Last Name</label>
-                    <input
-                        id="recipientLastName"
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        required
-                        disabled={loading}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="amount">Amount (€)</label>
-                    <input
-                        id="amount"
-                        type="text"
-                        inputMode="decimal"
-                        value={amount}
+        <div className="transfer-section-v2">
+            {savedRecipients.length > 0 && (
+                <div className="saved-recipients-compact">
+                    <label className="compact-label">Saved Recipients</label>
+                    <select
+                        className="compact-select"
+                        value={selectedRecipient}
                         onChange={(e) => {
-                            const v = e.target.value;
-                            if (v === '' || /^\d*\.?\d{0,2}$/.test(v)) setAmount(v);
+                            const recipientId = e.target.value;
+                            if (recipientId) {
+                                const recipient = savedRecipients.find(r => r.id === recipientId);
+                                if (recipient) handleRecipientSelect(recipient);
+                            } else {
+                                clearRecipient();
+                            }
                         }}
-                        required
-                        disabled={loading}
-                        placeholder="0.00"
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="description">Description (optional)</label>
-                    <input
-                        id="description"
-                        type="text"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        disabled={loading}
-                    />
-                </div>
-
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Processing...' : 'Send Money'}
-                </button>
-
-                {!showSaveRecipient && manualIban && firstName && lastName && (
-                    <button
-                        type="button"
-                        onClick={() => setShowSaveRecipient(true)}
-                        style={{ marginTop: '10px', background: '#28a745' }}
                         disabled={loading}
                     >
-                        Save as Recipient
-                    </button>
-                )}
+                        <option value="">New recipient or select...</option>
+                        {savedRecipients.map((recipient) => (
+                            <option key={recipient.id} value={recipient.id}>
+                                {recipient.firstName} {recipient.lastName} • {formatIban(recipient.iban)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
-                {showSaveRecipient && (
-                    <div className="save-contact-section">
-                        <h4>Save Recipient</h4>
-                        <button type="button" onClick={handleSave} style={{ background: '#28a745' }}>
-                            Save Recipient
-                        </button>
+            <form onSubmit={handleSubmit} className="transfer-form-v2">
+                <div className="form-compact">
+                    <div className="input-row">
+                        <div className="input-col">
+                            <input
+                                type="text"
+                                value={firstName}
+                                onChange={(e) => {
+                                    setFirstName(e.target.value);
+                                    setSelectedRecipient('');
+                                }}
+                                required
+                                disabled={loading}
+                                placeholder="First Name"
+                                className="compact-input"
+                            />
+                        </div>
+                        <div className="input-col">
+                            <input
+                                type="text"
+                                value={lastName}
+                                onChange={(e) => {
+                                    setLastName(e.target.value);
+                                    setSelectedRecipient('');
+                                }}
+                                required
+                                disabled={loading}
+                                placeholder="Last Name"
+                                className="compact-input"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="input-full">
+                        <input
+                            type="text"
+                            value={manualIban}
+                            onChange={(e) => {
+                                handleIbanChange(e.target.value);
+                                setSelectedRecipient('');
+                            }}
+                            required
+                            disabled={loading}
+                            placeholder="IBAN"
+                            className={`compact-input ${ibanError ? 'error' : ''}`}
+                        />
+                        <div className="error-text">{ibanError || '\u00A0'}</div>
+                    </div>
+
+                    <div className="input-row">
+                        <div className="input-col">
+                            <div className="amount-wrapper">
+                                <span className="euro-sign">€</span>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={amount}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v === '' || /^\d*\.?\d{0,2}$/.test(v)) setAmount(v);
+                                    }}
+                                    required
+                                    disabled={loading}
+                                    placeholder="Amount"
+                                    className="compact-input amount-input"
+                                />
+                            </div>
+                        </div>
+                        <div className="input-col">
+                            <input
+                                type="text"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                disabled={loading}
+                                placeholder="Description (optional)"
+                                className="compact-input"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="action-bar">
+                    {manualIban && firstName && lastName && !selectedRecipient && !ibanError && validateIban(manualIban) && !savedRecipients.some(r => r.iban.replaceAll(/\s/g, '') === manualIban.replaceAll(/\s/g, '')) && (
                         <button
                             type="button"
-                            onClick={() => setShowSaveRecipient(false)}
-                            style={{ marginLeft: '10px', background: '#6c757d' }}
+                            className="save-link"
+                            onClick={handleSave}
+                            disabled={loading}
                         >
-                            Cancel
+                            + Save Recipient
                         </button>
-                    </div>
-                )}
+                    )}
+                    <button type="submit" className="send-btn" disabled={loading}>
+                        {loading ? 'Sending...' : 'Send Money'}
+                    </button>
+                </div>
             </form>
         </div>
     );

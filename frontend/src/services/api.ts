@@ -40,11 +40,11 @@ export const createTransfer = async (transferData: {
     return result;
 };
 
-export const saveRecipient = async (userId: string, recipientIban: string) => {
+export const saveRecipient = async (userId: string, recipientIban: string, firstName: string, lastName: string) => {
     const response = await fetch(`${API_URL}/users/${userId}/saved-recipients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientIban }),
+        body: JSON.stringify({ recipientIban, firstName, lastName }),
     });
 
     if (!response.ok) throw new Error('Failed to save recipient');

@@ -11,9 +11,15 @@ function TransactionsList({ transactions, userIban }: Readonly<TransactionsListP
         return <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>No transactions yet</p>;
     }
 
+    const sortedTransactions = [...transactions].sort((a, b) => {
+        const dateA = new Date(a.transactionDate).getTime();
+        const dateB = new Date(b.transactionDate).getTime();
+        return dateB - dateA; // Latest first
+    });
+
     return (
         <div className="transactions-list">
-            {transactions.map((tx) => (
+            {sortedTransactions.map((tx) => (
                 <div key={tx.id} className="transaction-item">
                     <div className="transaction-details">
                         <div className="transaction-recipient">
