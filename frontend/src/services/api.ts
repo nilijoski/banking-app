@@ -1,5 +1,5 @@
 import { API_URL } from '../config';
-import type {User, Transaction, SavedRecipient} from '../types';
+import type {User, Transaction, SavedRecipient} from '../types/types.ts';
 
 export const fetchUser = async (accountNumber: string): Promise<User> => {
     const response = await fetch(`${API_URL}/users/number/${accountNumber}`);

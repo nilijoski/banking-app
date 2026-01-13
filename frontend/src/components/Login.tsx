@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import * as React from "react";
-import type { User } from '../types';
+import type { User } from '../types/types.ts';
 
 interface LoginProps {
     onLogin: (user: User) => void;

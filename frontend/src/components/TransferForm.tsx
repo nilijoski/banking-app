@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import type {SavedRecipient} from '../types';
+import type {SavedRecipient} from '../types/types.ts';
 import { validateIban, formatIban } from '../utils/formatters';
 
 interface TransferFormProps {

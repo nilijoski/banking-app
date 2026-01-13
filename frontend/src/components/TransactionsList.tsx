@@ -1,4 +1,4 @@
-import type {Transaction} from '../types';
+import type {Transaction} from '../types/types.ts';
 import { formatIban, formatDate } from '../utils/formatters';
 
 interface TransactionsListProps {

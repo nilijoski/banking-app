@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { User, Transaction, SavedRecipient } from '../types';
+import type { User, Transaction, SavedRecipient } from '../types/types.ts';
 import { useInactivityTimer } from '../hooks/useInactivityTimer';
 import { formatIban, formatTime, validateIban } from '../utils/formatters';
 import * as api from '../services/api';

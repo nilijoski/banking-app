@@ -1,4 +1,4 @@
-import type {SavedRecipient} from '../types';
+import type {SavedRecipient} from '../types/types.ts';
 import { formatIban } from '../utils/formatters';
 
 interface SavedRecipientsListProps {

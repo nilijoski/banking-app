@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {Routes, Route, Navigate, useNavigate} from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
-import type {User} from './types';
+import type {User} from './types/types.ts';
 import './App.css';
 import Dashboard from "./components/Dashboard.tsx";
 
